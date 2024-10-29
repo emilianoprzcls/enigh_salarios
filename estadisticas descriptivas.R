@@ -3,6 +3,7 @@ library(dplyr)
 library(ggplot2)
 library(kableExtra)
 library(MetBrewer)
+library(tidyr)
 # Cargar datos
 base_1 <- read_csv("base_1.csv")
 
@@ -86,6 +87,81 @@ ggplot(data_combined_weighted, aes(x = log(Ingreso_ponderado), fill = Tipo, weig
   scale_fill_manual(values=met.brewer("Austria", 4), name = NULL) +
   theme_light() +
   theme(legend.position = "bottom")
+
+colnames(base_1)
+
+# Listas de variables
+variables <- c("mayor_rentas", "mayor_sueldos", "mayor_transfer", "mayor_remesas")
+variables_cont <- c("edad_jefe", "tot_integ", "jefe_horas", "jefe_hijos")
+variables_desc <- c("sexo_jefe", "educa_jefe", "jefe_etnia")
+variables_consumo <- c(
+  "ali_dentro_sum", "ali_fuera_sum", "vesti_calz_sum", "pred_cons_sum", 
+  "agua_sum", "energia_sum", "salud_sum", "transporte_sum", 
+  "publico_sum", "comunica_sum", "educacion_sum", "erogac_tot_sum", "cuota_viv_sum"
+)
+
+# Inicializar una lista para almacenar los resultados
+resultados <- list()
+
+# Iterar sobre cada variable en "variables"
+for (var in variables) {
+  # Crear resumen ponderado para la variable actual
+  resumen <- base_1 %>%
+    group_by(!!sym(var)) %>%
+    summarise(across(all_of(variables_consumo),
+                     list(
+                       promedio = ~ weighted.mean(.x, w = factor, na.rm = TRUE),
+                       desviacion = ~ sqrt(weighted.mean((.x - weighted.mean(.x, w = factor, na.rm = TRUE))^2, w = factor, na.rm = TRUE))
+                     ),
+                     .names = "{col}_{fn}"
+    )) %>%
+    ungroup() %>%
+    # Añadir una columna para identificar la variable agrupada
+    mutate(variable = var)
+  
+  # Añadir el resumen a la lista de resultados
+  resultados[[var]] <- resumen
+}
+
+# Combinar todos los resultados en un solo data frame
+cont_summary_all <- bind_rows(resultados)
+
+#VARIABLES DESCRIPTIVAS
+# Listas de variables descriptivas y variables de interés
+variables_desc <- c("sexo_jefe", "educa_jefe", "jefe_etnia")
+variables <- c("mayor_rentas", "mayor_sueldos", "mayor_transfer", "mayor_remesas")
+
+# Crear una tabla vacía para almacenar los resultados
+tabla_final <- data.frame()
+
+# Iterar sobre cada variable de interés
+for (var_interes in variables) {
+  # Iterar sobre cada variable descriptiva
+  for (var_desc in variables_desc) {
+    # Calcular la tabla de frecuencias ponderada para cada combinación
+    table_proporcion <- with(base_1, tapply(factor, list(base_1[[var_desc]], base_1[[var_interes]]), sum, na.rm = TRUE))
+    
+    # Convertir a proporciones
+    table_proporcion <- table_proporcion / sum(base_1$factor) * 100
+    
+    # Convertir en data frame y agregar el nombre de la variable descriptiva y de interés para identificar
+    table_df <- as.data.frame.table(table_proporcion)
+    table_df$variable_desc <- var_desc
+    table_df$variable_interes <- var_interes
+    
+    # Hacer append de la tabla de la variable actual a la tabla final
+    tabla_final <- rbind(tabla_final, table_df)
+  }
+}
+
+# Visualizar la tabla final
+tabla_final
+
+
+
+
+
+
 
 
 

@@ -15,7 +15,9 @@ process_data <- function(year) {
     ) %>%
     select(
       folio_g, factor, ubica_geo, edad_jefe, sexo_jefe, educa_jefe, 
-      tot_integ, rentas, remesas, sueldos, transfer  # Seleccionar variables relevantes
+      tot_integ, rentas, remesas, sueldos, transfer,
+      ali_dentro, ali_fuera, vesti_calz, pred_cons, agua, energia, 
+      salud, transporte, publico, comunica, educacion, erogac_tot, cuota_viv
     )
   
   # Cargar y procesar datos de 'pobla' para el año específico
@@ -51,11 +53,24 @@ final_data_summarized <- final_data %>%
     tot_integ, jefe_etnia, jefe_horas, jefe_hijos
   ) %>%
   summarize(
-    rentas_sum = sum(rentas, na.rm = TRUE),       # Sumar ingresos por rentas
-    remesas_sum = sum(remesas, na.rm = TRUE),     # Sumar ingresos por remesas
-    sueldos_sum = sum(sueldos, na.rm = TRUE),     # Sumar ingresos por sueldos
-    transfer_sum = sum(transfer, na.rm = TRUE),   # Sumar ingresos por transferencias
-    .groups = 'drop'                              # Desagrupar después del resumen
+    rentas_sum = sum(rentas, na.rm = TRUE),           # Sumar ingresos por rentas
+    remesas_sum = sum(remesas, na.rm = TRUE),         # Sumar ingresos por remesas
+    sueldos_sum = sum(sueldos, na.rm = TRUE),         # Sumar ingresos por sueldos
+    transfer_sum = sum(transfer, na.rm = TRUE),       # Sumar ingresos por transferencias
+    ali_dentro_sum = sum(ali_dentro, na.rm = TRUE),   # Sumar alimentación dentro del hogar
+    ali_fuera_sum = sum(ali_fuera, na.rm = TRUE),     # Sumar alimentación fuera del hogar
+    vesti_calz_sum = sum(vesti_calz, na.rm = TRUE),   # Sumar vestimenta y calzado
+    pred_cons_sum = sum(pred_cons, na.rm = TRUE),     # Sumar predial y construcción
+    agua_sum = sum(agua, na.rm = TRUE),               # Sumar agua
+    energia_sum = sum(energia, na.rm = TRUE),         # Sumar energía
+    salud_sum = sum(salud, na.rm = TRUE),             # Sumar salud
+    transporte_sum = sum(transporte, na.rm = TRUE),   # Sumar transporte
+    publico_sum = sum(publico, na.rm = TRUE),         # Sumar gastos públicos
+    comunica_sum = sum(comunica, na.rm = TRUE),       # Sumar comunicación
+    educacion_sum = sum(educacion, na.rm = TRUE),     # Sumar educación
+    erogac_tot_sum = sum(erogac_tot, na.rm = TRUE),   # Sumar erogaciones totales
+    cuota_viv_sum = sum(cuota_viv, na.rm = TRUE),     # Sumar cuota de vivienda
+    .groups = 'drop'                                  # Desagrupar después del resumen
   )
 
 # Crear una copia de la base de datos original para evitar modificarla directamente
@@ -71,16 +86,36 @@ final_data_summarized <- final_data_summarized %>%
     mayor_transfer = ifelse(transfer_sum > sueldos_sum & transfer_sum > rentas_sum & transfer_sum > remesas_sum, 1, 0),
     
     # Crear variable binaria para indicar cuando el hogar gana mayormente por remesas
-    mayor_remesas = ifelse(remesas_sum > sueldos_sum & remesas_sum > rentas_sum & remesas_sum > transfer_sum, 1, 0)
+    mayor_remesas = ifelse(remesas_sum > 0, 1, 0)
   )
 
+variables_def <- c(
+  "rentas_sum", "remesas_sum", "sueldos_sum", "transfer_sum", 
+  "ali_dentro_sum", "ali_fuera_sum", "vesti_calz_sum", "pred_cons_sum", 
+  "agua_sum", "energia_sum", "salud_sum", "transporte_sum", 
+  "publico_sum", "comunica_sum", "educacion_sum", "erogac_tot_sum", "cuota_viv_sum"
+)
 
-# Sumar la variable 'factor' como verificación
-sum(final_data_summarized$factor)
+inpc_data <- data.frame(
+  year = c(2022, 2020, 2018, 2016),
+  def_factor = c(100/129.38, 100/113.818, 100/103.642, 100/95.849360000000)
+)
+
+final_data_summarized <- left_join(final_data_summarized, inpc_data)
+final_data_summarized[variables_def] <- lapply(final_data_summarized[variables_def], function(x) x * final_data_summarized$def_factor)
+
 str(final_data_summarized)
-table(final_data_summarized$mayor_rentas)
-table(final_data_summarized$mayor_sueldos)
-table(final_data_summarized$mayor_transfer)
-table(final_data_summarized$mayor_remesas)
 # Exportar datos resumidos a CSV
 write.csv(final_data_summarized, "base_1.csv", row.names = FALSE)
+
+
+
+
+
+
+
+
+
+
+
+
