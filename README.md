@@ -15,11 +15,14 @@ Este proyecto utiliza las Encuestas Nacionales de Ingresos y Gastos de los Hogar
 
 3. **estadisticas_descriptivas.R**: Este archivo calcula estadísticas descriptivas básicas a partir de `base_q.csv`. Los resultados y gráficas descriptivas se guardan en la carpeta `imagenes/`.
 
+4. **pruebasdehipotesis.R**: Este archivo realiza pruebas de hipótesis para analizar las diferencias de medias y varianzas entre diferentes tipos de ingresos. Los resultados de estas pruebas ayudan a identificar disparidades significativas en la distribución de ingresos y están documentados mediante tablas y gráficas almacenadas en la carpeta `imagenes/`.
+
 ## Flujo de Trabajo
 
 1. **Procesamiento de Datos**: Los archivos de la ENIGH en `db/` son limpiados y procesados en `limpieza.R` para crear la base `base_q.csv`.
 2. **Análisis de Dominancia Estocástica**: En `dominanciaestocastica.R`, se realizan cálculos avanzados de dominancia estocástica usando la base de datos generada.
-3. **Estadísticas Descriptivas**: Se generan estadísticas descriptivas en `estadisticas_descriptivas.R`, produciendo tanto datos como visualizaciones almacenadas en `imagenes/`.
+3. **Pruebas de Hipótesis**: En `pruebasdehipotesis.R`, se realizan pruebas estadísticas (diferencias de medias y varianzas) para identificar patrones relevantes en los ingresos.
+4. **Estadísticas Descriptivas**: Se generan estadísticas descriptivas en `estadisticas_descriptivas.R`, produciendo tanto datos como visualizaciones almacenadas en `imagenes/`.
 
 ## Requisitos
 
